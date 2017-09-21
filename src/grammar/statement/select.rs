@@ -5,7 +5,7 @@ use grammar::{Buffer, Clause, Condition, Expression, Statement};
 /// A `SELECT` statement.
 #[derive(Debug, Default)]
 pub struct Select {
-    table: Option<String>,
+    table: Vec<String>,
     columns: Option<Vec<String>>,
     so_that: Option<Where>,
     order_by: Option<OrderBy>,
@@ -21,7 +21,7 @@ impl Select {
 
     /// Set the table.
     pub fn table<T: ToString>(mut self, name: T) -> Self {
-        self.table = Some(name.to_string());
+        self.table.push(name.to_string());
         self
     }
 
@@ -80,7 +80,11 @@ impl Statement for Select {
             buffer.push("*");
         }
         buffer.push("FROM");
-        buffer.push(format!("`{}`", some!(self.table)));
+        let mut do_comma = false;
+        for table in &self.table{
+            if do_comma{ buffer.push(",");} else{do_comma=true;}
+            buffer.push(format!("`{}`", table));
+        }
         if let &Some(ref clause) = &self.so_that {
             buffer.push(try!(clause.compile()));
         }
