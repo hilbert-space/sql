@@ -103,6 +103,19 @@ macro_rules! some(
     );
 );
 
+
+macro_rules! first(
+    ($arr:expr, $name:expr) => (
+        match $arr.first() {
+            Some(ref value) => value,
+            _ => raise!(concat!("expected “", stringify!($name), "” to have at least 1 specified")),
+        }
+    );
+    ($this:ident.$field:ident) => (
+        first!($this.$field, $field)
+    );
+);
+
 macro_rules! push(
     ($collection:expr, $value:expr) => (
         match $collection {
