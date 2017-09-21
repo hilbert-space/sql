@@ -5,7 +5,7 @@ use grammar::{Buffer, Clause, Condition, Expression, Statement};
 /// A `SELECT` statement.
 #[derive(Debug, Default)]
 pub struct Select {
-    table: Vec<String>,
+    tables: Vec<String>,
     columns: Option<Vec<String>>,
     so_that: Option<Where>,
     order_by: Option<OrderBy>,
@@ -21,7 +21,7 @@ impl Select {
 
     /// Set the table.
     pub fn table<T: ToString>(mut self, name: T) -> Self {
-        self.table.push(name.to_string());
+        self.tables.push(name.to_string());
         self
     }
 
@@ -80,10 +80,9 @@ impl Statement for Select {
             buffer.push("*");
         }
         buffer.push("FROM");
-        let mut do_comma = false;
-        for table in &self.table{
-            if do_comma{ buffer.push(",");} else{do_comma=true;}
-            buffer.push(format!("`{}`", table));
+        buffer.push(format!("`{}`", first!(self.tables) ));
+        for table in self.tables.iter().skip(1){
+            buffer.push(format!(",`{}`", table));
         }
         if let &Some(ref clause) = &self.so_that {
             buffer.push(try!(clause.compile()));
@@ -106,6 +105,12 @@ mod tests {
     fn all() {
         let statement = select_from("foo");
         assert_eq!(statement.compile().unwrap(), "SELECT * FROM `foo`");
+    }
+
+    #[test]
+    fn multiple_tables() {
+        let statement = select_from("foo").table("bar");
+        assert_eq!(statement.compile().unwrap(), "SELECT * FROM `foo` ,`bar`");
     }
 
     #[test]
